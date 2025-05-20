@@ -53,6 +53,8 @@ print("\nAfter removing empty cleaned texts:", df.shape)
 
 # FEATURE ENGINEERING: 
 
+# reviews with upvotes
+df['has_upvotes'] = (df['thumbsUpCount'] > 0).astype(int)
 # word count (cleaned reviews)
 df['review_length'] = df['cleaned_text'].apply(lambda x: len(x.split()))
 # exclamation count (from raw data)
@@ -123,6 +125,18 @@ plt.title("Top Negative Words")
 plt.tight_layout()
 plt.show()
 
-# Save cleaned dataset for model training
-df.to_csv("data/processed/preprocessed_reviews.csv", index=False)
-print("\nCleaned data saved to: data/processed/preprocessed_reviews.csv")
+# features to use for training
+training_features = [
+    'has_upvotes',
+    'review_length',
+    'exclamation_count',
+    'question_count'
+] + [col for col in df.columns if col.startswith('ngram_')]
+
+# new df of selected features
+new_cols = ['cleaned_text', 'sentiment_binary'] + training_features
+df_selected = df[new_cols]
+
+# save new df for training
+df_selected.to_csv("data/processed/preprocessed_reviews.csv", index=False)
+print("Selected features saved to: data/processed/preprocessed_reviews.csv")
