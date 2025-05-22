@@ -31,51 +31,46 @@ preprocessor = ColumnTransformer([
     ("num", MinMaxScaler(), ["exclamation_count", "question_count", "has_upvotes"])
 ])
 
-# 4. Pipeline with MultinomialNB
-nb_pipeline = Pipeline([
-    ("features", preprocessor),
-    ("clf", MultinomialNB(alpha=1.0))  # alpha is laplace smoothing
+#SVM model training and testing
+svm_pipeline = Pipeline([
+    ("pre", preprocessor),
+    ("clf", LinearSVC(max_iter=10_000))
 ])
 
-# training
-nb_pipeline.fit(X_train, y_train)
-# testing
-y_pred_nb = nb_pipeline.predict(X_test)
+#training
+svm_pipeline.fit(X_train, y_train)
+#testing
+y_pred_svm = svm_pipeline.predict(X_test)
 
-
-# save model
 os.makedirs("models", exist_ok=True)
-MODEL_PATH = os.path.join("models", "nb_sentiment.pkl")
-joblib.dump(nb_pipeline, MODEL_PATH)
 
-
+MODEL_PATH = os.path.join("models", "svm_sentiment.pkl")
+joblib.dump(svm_pipeline, MODEL_PATH)
 print(f"Trained model saved to {MODEL_PATH}")
 
-
 # evaluation metrics
-acc   = accuracy_score(y_test, y_pred_nb)
-prec  = precision_score(y_test, y_pred_nb)
-rec   = recall_score(y_test, y_pred_nb)
-f1    = f1_score(y_test, y_pred_nb)
-print(classification_report(y_test, y_pred_nb, target_names=["Neg","Pos"], digits=4))
+acc_svm   = accuracy_score(y_test, y_pred_svm)
+prec_svm  = precision_score(y_test, y_pred_svm)
+rec_svm   = recall_score(y_test, y_pred_svm)
+f1_svm    = f1_score(y_test, y_pred_svm)
+print(classification_report(y_test, y_pred_svm, target_names=["Neg","Pos"], digits=4))
 
 # create evaluation directory
 os.makedirs("evaluation", exist_ok=True)
 
 # save numeric metrics to JSON
 metrics = {
-    "model": "naive bayes",
-    "accuracy": acc,
-    "precision": prec,
-    "recall": rec,
-    "f1": f1
+    "model": "SVM",
+    "accuracy": acc_svm,
+    "precision": prec_svm,
+    "recall": rec_svm,
+    "f1": f1_svm
 }
-with open("evaluation/naivebayes_metrics.json", "w") as fp:
+with open("evaluation/svm_metrics.json", "w") as fp:
     json.dump(metrics, fp, indent=2)
 
-
 # confusion matrix
-cm = confusion_matrix(y_test, y_pred_nb)
+cm = confusion_matrix(y_test, y_pred_svm)
 plt.figure(figsize=(5, 4))
 sns.heatmap(cm,
             annot=True,
@@ -85,9 +80,7 @@ sns.heatmap(cm,
             yticklabels=["Neg","Pos"])
 plt.xlabel("Predicted")
 plt.ylabel("Actual")
-plt.title("Naive Bayes Confusion Matrix")
+plt.title("SVM Confusion Matrix")
 plt.tight_layout()
-plt.savefig("evaluation/naivebayes_confusion_matrix.png")
+plt.savefig("evaluation/svm_confusion_matrix.png")
 plt.close()
-
-
